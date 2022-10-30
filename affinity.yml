@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+ name: apps
+ labels:
+   tier: frontend
+spec:
+  replicas: 3
+  selector:  # Using the selector we tell our replicaset which pods to manage
+    matchLabels:
+      tier: frontend
+  template:   # here we define our PODS Specs (k8s uses go template in the background)
+    metadata:
+      labels:
+        tier: frontend
+    spec:
+      affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: topology.kubernetes.io/zone
+                  operator: In
+                  values:
+                  - eu-west-1b
+                  - eu-west-1c
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: node.kubernetes.io/instance-type
+                  operator: In
+                  values:
+                  - t3.large
+      containers:
+      - name: app1
+        image: supergiantkir/animals:bear
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /storage/app1
+          name: app-storage
+      - name: app2
+        image: yanivomc/spring-music:latest
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /storage/app2
+          name: app-storage
+      volumes:
+        - name: app-storage
+
+      nodeSelector:
+        env: frontend
+        
+      
